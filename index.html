@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chinh Phục Tách Gộp Số</title>
+    
+    <style>
+        :root {
+            --color-pink: #FFC0CB;
+            --color-orange: #FFA07A;
+            --color-orange-block: #FFA500; 
+            --color-blue: #4682B4; 
+            --track-color: #4682B4;
+            --box-border: #B0C4DE; 
+            
+            /* Kích thước giảm 10% */
+            --ball-base-size: 74.67px; 
+            --ball-size: calc(var(--ball-base-size) * 0.9); 
+
+            --overlap-offset: calc(var(--ball-size) / 2); 
+            --track-height: 350px; 
+            --track-width: 90vw; 
+            --pedestal-size: 150px; 
+            --border-thickness: 6px; 
+            --base-font-size: 1.5em; 
+            --new-control-panel-bottom: 24px;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100vw;
+            height: 100vh;
+            background-color: #E0FFFF;
+            margin: 0;
+            overflow: hidden; 
+        }
+
+        #game-container {
+            background-color: white;
+            border: 5px solid var(--color-pink);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            width: 98%; 
+            height: 95%;
+            position: relative; 
+            box-sizing: border-box; 
+        }
+
+        #teacher-info {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            text-align: right;
+            color: var(--color-blue);
+        }
+        #teacher-info div {
+            font-weight: bold;
+            font-size: var(--base-font-size);
+            line-height: 1.2;
+        }
+        #teacher-info span {
+            font-size: calc(var(--base-font-size) * 0.8);
+            font-weight: normal;
+        }
+
+        .box-style {
+            padding: 12px 22.5px; 
+            border: var(--border-thickness) solid var(--box-border);
+            border-radius: 10px;
+            background-color: #F8F8FF; 
+            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        h1.title {
+            color: var(--color-blue);
+            font-size: calc(1.8em * 1.5); 
+            width: 450px; 
+            margin: 10px auto;
+            line-height: 1.2; 
+        }
+        
+        #progress-bar {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            display: flex;
+            gap: 30px; 
+            font-weight: bold;
+            color: var(--track-color);
+            font-size: var(--base-font-size);
+        }
+
+        #slide-area {
+            display: flex;
+            justify-content: center;
+            margin-top: 8vh; 
+            margin-bottom: 10px; 
+        }
+
+        #slide-track {
+            position: relative;
+            width: var(--track-width); 
+            height: var(--track-height);
+            border: var(--border-thickness) solid var(--track-color);
+            border-radius: 50px / 30px; 
+            margin-left: var(--pedestal-size); 
+        }
+
+        #orange-pedestal {
+            position: absolute;
+            left: calc(0px - var(--pedestal-size) - var(--border-thickness)); 
+            top: calc(0px - var(--border-thickness));
+            width: var(--pedestal-size); 
+            height: calc(var(--track-height) + 2 * var(--border-thickness));
+            background-color: var(--color-orange-block);
+            border-radius: 10px;
+            z-index: 15; 
+        }
+
+        .barrier {
+            position: absolute;
+            width: var(--border-thickness); 
+            background-color: var(--track-color);
+            z-index: 5;
+        }
+        .top-barrier { 
+            top: 0; 
+            height: 50%;
+        }
+        #divider-3 { 
+            left: 45%; 
+        } 
+
+        .group-absolute {
+            position: absolute;
+            height: var(--ball-size);
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            z-index: 10; 
+        }
+
+        .ball {
+            width: var(--ball-size);
+            height: var(--ball-size);
+            border-radius: 50%;
+            margin-right: calc(1.5 * 5px); 
+            cursor: pointer; 
+            transition: transform 0.3s, background-color 0.3s;
+            flex-shrink: 0;
+            border: 2px solid rgba(0,0,0,0.2); 
+            box-sizing: border-box;
+        }
+        
+        /* Căn giữa chấm tròn đè lên đường kẻ trên */
+        #top-track-group2, #top-track-group1 {
+            top: 0;
+            transform: translateY(-50%);
+        }
+
+        #top-track-group2 { 
+            left: calc(var(--overlap-offset) + 5%); 
+            width: 40%;
+        }
+
+        #top-track-group1 { 
+            left: calc(45% + var(--overlap-offset)); 
+            width: 50%;
+        }
+
+        /* --- THAY ĐỔI: Chấm tròn đè lên đường kẻ dưới --- */
+        #ball-container {
+            bottom: 0; 
+            left: var(--overlap-offset);
+            width: 90%;
+            transform: translateY(50%); /* Đẩy tâm xuống đúng đường viền */
+        }
+
+        #request-display {
+            position: absolute;
+            left: 50%; 
+            transform: translate(-50%, -50%); 
+            top: 50%; 
+            color: var(--color-blue);
+            z-index: 20; 
+            font-size: calc(1.5 * 1.5em * 0.8);
+            padding: calc(12px * 0.8) calc(22.5px * 0.8);
+        }
+
+        #control-panel {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 40px; 
+            justify-content: center;
+            position: absolute;
+            bottom: var(--new-control-panel-bottom); 
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+        }
+
+        .control-btn, #feedback-area {
+            font-size: calc(1.9 * var(--base-font-size)); 
+            cursor: pointer;
+            padding: calc(1.9 * 12px) calc(1.9 * 22.5px);
+        }
+        
+        #start-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.95);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            border-radius: 20px;
+        }
+
+        .start-box {
+            padding: 70px; 
+            background-color: #F8F8FF;
+            border: 5px solid var(--color-blue);
+        }
+        .start-box h2 {
+            color: var(--color-pink);
+            font-size: calc(2em * 1.9); 
+            margin-bottom: 50px; 
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .hidden { display: none !important; }
+        .shake { animation: shake 0.5s; }
+        @keyframes shake {
+            0%, 100% {transform: translateX(0);}
+            25% {transform: translateX(-10px);}
+            75% {transform: translateX(10px);}
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="teacher-info">
+            <div id="teacher-name">Giáo viên: Nguyễn Thị Hương</div>
+            <span id="school-name">Đơn vị: Trường TH Tân Đồng</span>
+        </div>
+        
+        <header>
+            <h1 class="box-style title">
+                Chinh Phục<br>
+                Tách-Gộp Số
+            </h1>
+            <div id="progress-bar">
+                <span id="score" class="progress-item">Điểm: 0</span>
+                <span id="question-count" class="progress-item">Câu: 0/10</span>
+            </div>
+        </header>
+
+        <div id="slide-area">
+            <div id="slide-track">
+                <div id="orange-pedestal"></div>
+                <div id="divider-3" class="barrier top-barrier"></div>
+                
+                <div id="top-track-group2" class="ball-group group-absolute"></div> 
+                <div id="top-track-group1" class="ball-group group-absolute"></div> 
+
+                <div id="ball-container" class="ball-group group-absolute"></div>
+
+                <div id="request-display" class="box-style">
+                    <span id="current-request">Tách: 5</span>
+                    <div id="sub-info" style="font-size: 0.5em; color: #888;"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="control-panel">
+            <button id="check-btn" class="box-style control-btn" disabled>Kiểm tra</button>
+            <div id="feedback-area" class="box-style hidden">
+                <p id="feedback-text"></p>
+            </div>
+            <button id="next-btn" class="box-style control-btn hidden">Tiếp theo</button>
+        </div>
+
+        <div id="start-screen">
+            <div class="box-style start-box">
+                <h2>Chào mừng bạn đến với Chinh Phục Tách-Gộp Số</h2> 
+                <button id="start-btn" class="box-style control-btn">Bắt đầu Chơi</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const totalBalls = 10;
+            let currentNumberToManipulate = 0;
+            let currentPhase = 'select'; 
+            let score = 0;
+            let questionIndex = 0;
+            const maxQuestions = 10;
+            
+            let foundPairs = []; 
+            let totalPairsNeeded = 0;
+
+            const ballContainer = document.getElementById('ball-container');
+            const topTrackGroup1 = document.getElementById('top-track-group1');
+            const topTrackGroup2 = document.getElementById('top-track-group2');
+            const checkBtn = document.getElementById('check-btn');
+            const nextBtn = document.getElementById('next-btn');
+            const currentRequest = document.getElementById('current-request');
+            const subInfo = document.getElementById('sub-info');
+            const feedbackText = document.getElementById('feedback-text');
+            const feedbackArea = document.getElementById('feedback-area');
+            const scoreDisplay = document.getElementById('score');
+            const questionCountDisplay = document.getElementById('question-count');
+
+            function updateScore() {
+                scoreDisplay.textContent = `Điểm: ${score}`;
+                questionCountDisplay.textContent = `Câu: ${questionIndex}/${maxQuestions}`;
+            }
+
+            function createBalls() {
+                ballContainer.innerHTML = '';
+                topTrackGroup1.innerHTML = '';
+                topTrackGroup2.innerHTML = '';
+
+                for (let i = 0; i < totalBalls; i++) {
+                    const ball = document.createElement('div');
+                    ball.classList.add('ball');
+                    // Chỉ dùng một màu duy nhất
+                    ball.style.backgroundColor = 'var(--color-orange)'; 
+                    ball.dataset.index = i;
+                    ball.dataset.location = 'bottom';
+                    ball.addEventListener('click', handleBallClick);
+                    ballContainer.appendChild(ball);
+                }
+            }
+            
+            function rearrangeBalls() {
+                const balls = Array.from(document.querySelectorAll('.ball'));
+                ballContainer.innerHTML = '';
+                topTrackGroup1.innerHTML = '';
+                topTrackGroup2.innerHTML = '';
+                
+                balls.forEach(ball => {
+                    if (ball.dataset.location === 'bottom') ballContainer.appendChild(ball);
+                    else if (ball.dataset.location === 'top1') topTrackGroup1.appendChild(ball);
+                    else if (ball.dataset.location === 'top2') topTrackGroup2.appendChild(ball);
+                });
+            }
+
+            function generateNewQuestion() {
+                if (currentNumberToManipulate !== 0 && foundPairs.length < totalPairsNeeded) {
+                    startNewTurn(currentNumberToManipulate, false);
+                } else {
+                    if (questionIndex >= maxQuestions) {
+                        endGame();
+                        return;
+                    }
+                    questionIndex++;
+                    let newNum = Math.floor(Math.random() * 7) + 4; 
+                    startNewTurn(newNum, true);
+                }
+            }
+
+            function startNewTurn(num, isNewNumber) {
+                currentNumberToManipulate = num;
+                currentPhase = 'select';
+                
+                if (isNewNumber) {
+                    foundPairs = [];
+                    totalPairsNeeded = Math.floor(currentNumberToManipulate / 2);
+                }
+
+                currentRequest.textContent = `Tách: ${currentNumberToManipulate}`;
+                subInfo.textContent = `(Đã tìm: ${foundPairs.length}/${totalPairsNeeded} cách)`;
+                
+                feedbackArea.classList.add('hidden');
+                nextBtn.classList.add('hidden');
+                checkBtn.classList.remove('hidden');
+                checkBtn.disabled = true;
+
+                createBalls();
+                updateScore();
+            }
+
+            function handleBallClick(e) {
+                const ball = e.target;
+                const selectedInTop = topTrackGroup1.children.length + topTrackGroup2.children.length;
+
+                if (currentPhase === 'select') {
+                    if (ball.dataset.location === 'bottom' && selectedInTop < currentNumberToManipulate) {
+                        ball.dataset.location = 'top1';
+                        rearrangeBalls();
+                        if (topTrackGroup1.children.length === currentNumberToManipulate) {
+                            currentPhase = 'split';
+                        }
+                    } else if (ball.dataset.location === 'top1') {
+                        ball.dataset.location = 'bottom';
+                        rearrangeBalls();
+                    }
+                }
+                else if (currentPhase === 'split') {
+                    checkBtn.disabled = false;
+                    if (ball.dataset.location === 'top1') {
+                        ball.dataset.location = 'top2';
+                    } else if (ball.dataset.location === 'top2') {
+                        ball.dataset.location = 'top1';
+                    }
+                    rearrangeBalls();
+                }
+            }
+
+            function checkAnswer() {
+                const p1 = topTrackGroup1.children.length;
+                const p2 = topTrackGroup2.children.length;
+                
+                if (p1 > 0 && p2 > 0 && (p1 + p2 === currentNumberToManipulate)) {
+                    const smaller = Math.min(p1, p2);
+                    if (foundPairs.includes(smaller)) {
+                        giveFeedback(false, `Cách tách ${p1} và ${p2} này bạn đã tìm rồi, hãy tìm cách khác nhé!`);
+                    } else {
+                        foundPairs.push(smaller);
+                        score += 10;
+                        let msg = `Chính xác! ${currentNumberToManipulate} gồm ${p1} và ${p2}.`;
+                        if (foundPairs.length === totalPairsNeeded) {
+                            msg = `🎉 Xuất sắc! Bạn đã tìm đủ các cách tách số ${currentNumberToManipulate}!`;
+                        }
+                        giveFeedback(true, msg);
+                        checkBtn.disabled = true;
+                        nextBtn.classList.remove('hidden');
+                        updateScore();
+                    }
+                } else {
+                    giveFeedback(false, "Bạn cần tách khối tròn thành hai nhóm khác nhau nhé!");
+                }
+            }
+
+            function giveFeedback(isCorrect, message) {
+                feedbackArea.classList.remove('hidden');
+                feedbackText.textContent = message;
+                feedbackText.style.color = isCorrect ? "green" : "red";
+                feedbackText.classList.remove('shake');
+                if (!isCorrect) setTimeout(() => feedbackText.classList.add('shake'), 10);
+            }
+
+            function endGame() {
+                currentRequest.textContent = `🎉 HOÀN THÀNH!`;
+                subInfo.textContent = "";
+                feedbackText.textContent = `Tổng điểm của bạn: ${score}!`;
+                feedbackText.style.color = "blue";
+                feedbackArea.classList.remove('hidden');
+                nextBtn.textContent = "Chơi Lại";
+                nextBtn.classList.remove('hidden');
+                checkBtn.classList.add('hidden');
+            }
+
+            document.getElementById('start-btn').addEventListener('click', () => {
+                document.getElementById('start-screen').classList.add('hidden');
+                generateNewQuestion();
+            });
+
+            checkBtn.addEventListener('click', checkAnswer);
+            nextBtn.addEventListener('click', () => {
+                if (nextBtn.textContent === "Chơi Lại") location.reload();
+                else generateNewQuestion();
+            });
+        });
+    </script>
+</body>
+</html>
